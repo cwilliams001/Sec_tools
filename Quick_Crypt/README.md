@@ -16,8 +16,8 @@ The encrypted file will be saved as 'encrypted_file.gpg' and the decrypted file 
 - base64
 - gnupg
 - getpass
-- import readline
-- import glob
+- readline
+- glob
 
 ## Note
 
