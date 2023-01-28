@@ -15,6 +15,7 @@ The encrypted file will be saved as 'encrypted_file.gpg' and the decrypted file 
 - os
 - base64
 - gnupg
+- getpass
 
 ## Note
 

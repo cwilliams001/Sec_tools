@@ -1,6 +1,7 @@
 import os
 import base64
 import gnupg
+import getpass
 
 
 
@@ -50,7 +51,7 @@ if action == 'e':
     base64_data = base64.b64encode(file_data)
 
     # Prompt user for password
-    password = input("[*] Enter the password for encryption: ")
+    password = getpass.getpass("[*] Enter the password for encryption: ")
     if len(password) < 8:
         print("[-] Error: Password must be at least 8 characters.")
         exit()
@@ -70,7 +71,7 @@ if action == 'e':
 # Decrypt file
 elif action == 'd':
     # Prompt user for password
-    password = input("[*] Enter the password for decryption: ")
+    password = getpass.getpass("[*] Enter the password for decryption: ")
 
     # Decrypt file data with GPG symmetric decryption
     try:
