@@ -2,6 +2,8 @@ import os
 import base64
 import gnupg
 import getpass
+import readline
+import glob
 
 
 
@@ -15,14 +17,20 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 # Print hacker-like ASCII art
 print("""
- ____ ____ ____ ____ ____ ____ 
-||c |||r |||y |||p |||t |||o ||
-||__|||__|||__|||__|||__|||__||
-|/__\|/__\|/__\|/__\|/__\|/__\|
+ 
+ ██████  ██    ██ ██  ██████ ██   ██      ██████ ██████  ██    ██ ██████  ████████ 
+██    ██ ██    ██ ██ ██      ██  ██      ██      ██   ██  ██  ██  ██   ██    ██    
+██    ██ ██    ██ ██ ██      █████       ██      ██████    ████   ██████     ██    
+██ ▄▄ ██ ██    ██ ██ ██      ██  ██      ██      ██   ██    ██    ██         ██    
+ ██████   ██████  ██  ██████ ██   ██      ██████ ██   ██    ██    ██         ██    
+    ▀▀                                                                             
+                                                                                   
+                                                                                                                
 """)
 
 # Initialize GPG object
 gpg = gnupg.GPG()
+
 
 # Prompt user for action
 action = input("[*] Enter 'e' to encrypt or 'd' to decrypt a file: ")
@@ -30,6 +38,14 @@ action = input("[*] Enter 'e' to encrypt or 'd' to decrypt a file: ")
 if action != 'e' and action != 'd':
    print("[-] Error: Invalid action. Please enter 'e' to encrypt or 'd' to decrypt.")
    exit()
+
+def complete(text, state):
+    return (glob.glob(text+'*')+[None])[state]
+
+readline.set_completer_delims(' \t\n;')
+readline.parse_and_bind("tab: complete")
+readline.set_completer(complete)
+
 
 # Prompt user for file name
 file_name = input("[*] Enter the name of the file: ")
@@ -90,4 +106,3 @@ elif action == 'd':
     with open('decrypted_file.txt', 'wb') as f:
         f.write(decoded_data)
     print("[+] File has been decrypted.")
-

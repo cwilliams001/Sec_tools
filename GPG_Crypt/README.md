@@ -1,6 +1,6 @@
-# GPG File Crypt
+# Quick Crypt
 
-GPG File Crypt is a command-line tool for encrypting and decrypting files using the Gnu Privacy Guard (GPG) library. It uses symmetric AES-256 encryption and requires a password for encryption and decryption.
+Quick Crypt is a command-line tool for encrypting and decrypting files using the Gnu Privacy Guard (GPG) library. It uses symmetric AES-256 encryption and requires a password for encryption and decryption.
 
 ## Usage
 
@@ -16,6 +16,8 @@ The encrypted file will be saved as 'encrypted_file.gpg' and the decrypted file 
 - base64
 - gnupg
 - getpass
+- import readline
+- import glob
 
 ## Note
 
