@@ -18,6 +18,7 @@ The encrypted file will be saved as 'encrypted_file.gpg' and the decrypted file 
 - getpass
 - readline
 - glob
+- tarfile
 
 ## Note
 
