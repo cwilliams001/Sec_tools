@@ -64,6 +64,7 @@ set_hopping_mode() {
 }
 
 # Function to get datasource information
+# Function to get datasource information
 get_datasources() {
     echo -e "${CYAN}Fetching available datasources...${NC}"
     local json_response=$(curl -s "http://$KISMET_USER:$KISMET_PASS@localhost:2501/datasource/all_sources.json")
@@ -77,12 +78,14 @@ get_datasources() {
     
     echo -e "${YELLOW}Found datasources:${NC}"
     for i in "${!uuids[@]}"; do
-        echo -e "${MAGENTA}$((i+1)). ${BLUE}${interfaces[$i]}${NC} (${CYAN}${names[$i]}${NC}) - Current Channel: ${GREEN}${channels[$i]}${NC}"
+        echo -e "${MAGENTA}$((i+1)). ${BLUE}${interfaces[$i]}${NC} (${CYAN}${names[$i]}${NC})"
         if [ "${hopping[$i]}" == "1" ]; then
+            echo -e "   Channel: ${GREEN}Hopping${NC}"
             echo -e "   Hopping: ${CYAN}true${NC}"
             formatted_channels=$(format_hop_channels "${hop_channels[$i]}")
             echo -e "   Hop Channels: ${YELLOW}$formatted_channels${NC}"
         else
+            echo -e "   Channel: ${GREEN}${channels[$i]}${NC}"
             echo -e "   Hopping: ${RED}false${NC}"
         fi
         echo -e "   UUID: ${YELLOW}${uuids[$i]}${NC}"
@@ -149,5 +152,5 @@ while true; do
             ;;
     esac
     
-    sleep 2  # Wait for 2 seconds
+    sleep 1
 done
