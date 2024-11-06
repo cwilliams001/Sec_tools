@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Check if script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "This script must be run as root. Re-running with sudo..."
+    exec sudo -E "$0" "$@"
+    exit $?
+fi
+
 # Check if the environment variables are set
 REQUIRED_VARS=("TARGET" "TARGET_IP" "BASEDIR" "RECON_DIR" "ENUM_DIR" "TGT_DOMAIN")
 for var in "${REQUIRED_VARS[@]}"; do
