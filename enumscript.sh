@@ -72,8 +72,15 @@ echo "[DEBUG] Open ports found: $OPEN_PORTS"
 # Perform targeted scan on open ports if any were found
 if [ -n "$OPEN_PORTS" ]; then
     do_nmap_scan "targeted" "-p$OPEN_PORTS -sV -sC --script=vuln" "targeted_scan"
+# Check if port 445 is open and run smb2-security-mode.nse script
+    if echo "$OPEN_PORTS" | grep -q "445"; then
+        echo "[+] Port 445 is open. Running SMB security mode scan..."
+        do_nmap_scan "smb" "-p445 --script=smb2-security-mode.nse" "smb_scan"
+    else
+        echo "[*] Port 445 is not open. Skipping SMB security mode scan."
+    fi
 else
-    echo "No open ports found. Skipping targeted scan."
+    echo "No open ports found. Skipping targeted scan and SMB scan."
 fi
 
 # Perform UDP scan on top 100 ports
