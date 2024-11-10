@@ -1,29 +1,61 @@
-# Quick Crypt
+# Quick-Crypt
 
-Quick Crypt is a command-line tool for encrypting and decrypting files using the Gnu Privacy Guard (GPG) library. It uses symmetric AES-256 encryption and requires a password for encryption and decryption.
+Quick-Crypt is a fast and secure file encryption and decryption tool written in Python. It provides an easy-to-use command-line interface for encrypting and decrypting files and directories.
+
+```ascii
+  ____        _      _    ______                 _   
+ / __ \      (_)    | |  / _____)               | |  
+| |  | |_   _ _  ___| |_| /     _ __ _   _ _ __ | |_ 
+| |  | | | | | |/ __| __| |    | '__| | | | '_ \| __|
+| |__| | |_| | | (__| |_| \____| |  | |_| | |_) | |_ 
+ \___\_\\__,_|_|\___|\__)\_____)_|   \__, | .__/ \__|
+                                      __/ | |        
+                                     |___/|_|        
+```
+
+## Features
+
+- Encrypt and decrypt individual files
+- Encrypt and decrypt entire directories
+- Uses strong AES256 encryption
+- Password-based encryption
+- Progress bar for file operations
+- Tab completion for file paths
+- User-friendly command-line interface
+
+## Requirements
+
+- Python 3.6+
+- Required Python packages:
+  - gnupg
+  - tqdm
+
+## Installation
+
+1. Clone this repository or download the script.
+2. Install the required packages:
+
+```bash
+pip install gnupg tqdm
+```
 
 ## Usage
 
-1. Run the script as root
-2. Choose 'e' to encrypt a file or 'd' to decrypt a file
-3. Enter the name of the file to be encrypted or decrypted
-4. Enter a password for encryption or decryption (minimum 8 characters)
+Run the script:
 
-The encrypted file will be saved as 'encrypted_file.gpg' and the decrypted file will be saved as 'decrypted_file.txt'
+```bash
+python quick-crypt.py
+```
 
-## Dependencies
-- os
-- base64
-- gnupg
-- getpass
-- readline
-- glob
-- tarfile
+Follow the on-screen menu to:
 
-## Note
+1. Encrypt a file or directory
+2. Decrypt a file or directory
+3. View help
+4. Exit the program
 
-This script will only work on Windows if you have the `cls` command installed,  otherwise you can remove the os.system('cls' if os.name == 'nt' else 'clear') command or replace it with os.system('clear') if you are running the script on a unix-based system.
+When prompted, enter the path to the file or directory you want to process. You can use tab completion for file paths and '~' to represent your home directory.
 
-## License
+## Security Note
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This tool uses symmetric encryption with a password. Always use strong, unique passwords and keep them secure. The security of your encrypted files depends on the strength of your password.

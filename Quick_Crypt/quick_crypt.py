@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os
 import base64
 import gnupg
@@ -5,18 +7,10 @@ import getpass
 import readline
 import glob
 import tarfile
+import argparse
+from tqdm import tqdm
 
-
-# Check if script is being run as root
-if os.geteuid() != 0:
-    print("[-] Error: Please run the script as root.")
-    exit()
-
-# Clear the terminal
-os.system('cls' if os.name == 'nt' else 'clear')
-
-# Print hacker-like ASCII art
-print("""
+BANNER = r"""
  
  ██████  ██    ██ ██  ██████ ██   ██      ██████ ██████  ██    ██ ██████  ████████ 
 ██    ██ ██    ██ ██ ██      ██  ██      ██      ██   ██  ██  ██  ██   ██    ██    
@@ -26,104 +20,133 @@ print("""
     ▀▀                                                                             
                                                                                    
                                                                                                                 
-""")
+"""
 
-# Initialize GPG object
-gpg = gnupg.GPG()
-
-
-# Prompt user for action
-action = input("[*] Enter 'e' to encrypt or 'd' to decrypt a file: ")
-
-if action != 'e' and action != 'd':
-    print("[-] Error: Invalid action. Please enter 'e' to encrypt or 'd' to decrypt.")
-    exit()
+def print_banner():
+    print(BANNER)
+    print("File Encryption and Decryption Tool")
+    print("-----------------------------------")
 
 
-def complete(text, state):
-    return (glob.glob(text+'*')+[None])[state]
+def expand_path(path):
+    return os.path.expanduser(path)
 
+def setup_readline():
+    readline.set_completer_delims(' \t\n;')
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer(lambda text, state: (glob.glob(text+'*')+[None])[state])
 
-readline.set_completer_delims(' \t\n;')
-readline.parse_and_bind("tab: complete")
-readline.set_completer(complete)
+def compress_directory(dir_name):
+    tar_name = f"{dir_name}.tar.gz"
+    with tarfile.open(tar_name, mode='w:gz') as tar:
+        tar.add(dir_name, arcname=os.path.basename(dir_name))
+    return tar_name
 
-
-# Prompt user for file or directory name
-file_name = input("[*] Enter the name of the file or directory: ")
-
-if os.path.isdir(file_name):
-    # Compress directory into tarball
-    with tarfile.open(file_name+'.tar.gz', mode='w:gz') as tar:
-        tar.add(file_name, arcname=os.path.basename(file_name))
-    # Update file_name variable to point to the tarball.
-    file_name += '.tar.gz'
-    if not os.path.exists(file_name):
-        print("[-] Error: Failed to compress directory.")
-        exit()
-elif not os.path.exists(file_name):
-    print("[-] Error: File not found.")
-    exit()
-
-# Read file to be encrypted or decrypted
-try:
-    with open(file_name, 'rb') as f:
-        file_data = f.read()
-except FileNotFoundError:
-    print("[-] Error: File not found.")
-    exit()
-
-# Encrypt file
-if action == 'e':
-    # Encode file data with base64
-    base64_data = base64.b64encode(file_data)
-
-    # Prompt user for password
-    password = getpass.getpass("[*] Enter the password for encryption: ")
-    if len(password) < 8:
-        print("[-] Error: Password must be at least 8 characters.")
-        exit()
-
-    # Encrypt file data with GPG symmetric encryption
-    try:
-        encryption_result = gpg.encrypt(
-            base64_data, symmetric='AES256', passphrase=password, recipients=None)
-    except gnupg.errors.BadPassphrase:
-        print("[-] Error: Invalid password.")
-        exit()
-
-    # Write encrypted data to file
-    with open(file_name, 'wb') as f:
-        f.write(encryption_result.data)
-    print("[+] File has been encrypted.")
-
-# Decrypt file
-elif action == 'd':
-    # Prompt user for password
-    password = getpass.getpass("[*] Enter the password for decryption: ")
-
-    # Decrypt file data with GPG symmetric decryption
-    try:
-        decryption_result = gpg.decrypt(file_data, passphrase=password)
-    except gnupg.errors.BadPassphrase:
-        print("[-] Error: Invalid password.")
-        exit()
-    except gnupg.errors.DecryptionFailed:
-        print("[-] Error: Decryption failed.")
-        exit()
-
-    # Decode base64 data
-    decoded_data = base64.b64decode(decryption_result.data)
-
-    # Write decrypted data to file
-
-    with open(file_name, 'wb') as f:
-        f.write(decoded_data)
-
+def decompress_directory(file_name):
     if tarfile.is_tarfile(file_name):
         with tarfile.open(file_name, 'r:gz') as tar:
             tar.extractall(path=os.path.dirname(file_name))
-            tar.close()
-        print("[+] File has been decrypted.")
-    else:
-        print("[-] Error: Failed to decompress directory.")
+        return True
+    return False
+
+def encrypt_file(file_name, password, output_file=None):
+    with open(file_name, 'rb') as f:
+        file_data = f.read()
+    base64_data = base64.b64encode(file_data)
+    gpg = gnupg.GPG()
+    encryption_result = gpg.encrypt(base64_data, symmetric='AES256', passphrase=password, recipients=None)
+    output_file = output_file or f"{file_name}.enc"
+    with open(output_file, 'wb') as f:
+        f.write(encryption_result.data)
+    print(f"[+] File encrypted: {output_file}")
+
+def decrypt_file(file_name, password, output_file=None):
+    with open(file_name, 'rb') as f:
+        file_data = f.read()
+    gpg = gnupg.GPG()
+    decryption_result = gpg.decrypt(file_data, passphrase=password)
+    decoded_data = base64.b64decode(decryption_result.data)
+    output_file = output_file or (file_name[:-4] if file_name.endswith('.enc') else f"{file_name}.dec")
+    with open(output_file, 'wb') as f:
+        f.write(decoded_data)
+    print(f"[+] File decrypted: {output_file}")
+    return output_file
+
+def process_file_with_progress(action, file_name, password, output_file=None):
+    file_size = os.path.getsize(file_name)
+    with tqdm(total=file_size, unit='B', unit_scale=True, desc=f"{'Encrypting' if action == 'e' else 'Decrypting'}") as pbar:
+        if action == 'e':
+            encrypt_file(file_name, password, output_file)
+        else:
+            decrypt_file(file_name, password, output_file)
+        pbar.update(file_size)
+
+def print_help():
+    print("\nFile Encryption/Decryption Tool")
+    print("-------------------------------")
+    print("This tool allows you to encrypt and decrypt files and directories.")
+    print("\nUsage:")
+    print("1. Encrypt a file or directory")
+    print("2. Decrypt a file or directory")
+    print("3. Help")
+    print("4. Exit")
+    print("\nFor file operations, you can use tab completion when entering file paths.")
+
+def main():
+    setup_readline()
+    print_banner()
+
+    while True:
+        print("\n--- File Encryption/Decryption Tool ---")
+        print("1. Encrypt a file or directory")
+        print("2. Decrypt a file or directory")
+        print("3. Help")
+        print("4. Exit")
+
+        choice = input("\nEnter your choice (1-4): ")
+
+        if choice == '1':
+            action = 'e'
+        elif choice == '2':
+            action = 'd'
+        elif choice == '3':
+            print_help()
+            continue
+        elif choice == '4':
+            print("Exiting the program. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+            continue
+
+        file_path = input("Enter the path to the file or directory: ")
+        file_path = expand_path(file_path)
+        if not os.path.exists(file_path):
+            print(f"[-] Error: {file_path} not found.")
+            continue
+
+        is_dir = os.path.isdir(file_path)
+        if is_dir and action == 'e':
+            file_path = compress_directory(file_path)
+
+        password = getpass.getpass("Enter the password (min 8 characters): ")
+        if len(password) < 8:
+            print("[-] Error: Password must be at least 8 characters.")
+            continue
+
+        output_file = input("Enter the output file name (press Enter for default): ") or None
+
+        try:
+            process_file_with_progress(action, file_path, password, output_file)
+            if action == 'd' and is_dir:
+                if decompress_directory(file_path[:-4] if file_path.endswith('.enc') else file_path):
+                    print("[+] Directory decompressed successfully.")
+                else:
+                    print("[-] Error: Failed to decompress directory.")
+        except Exception as e:
+            print(f"[-] Error: {str(e)}")
+
+if __name__ == "__main__":
+    main()
+
+
